@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Server Interface</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+<body>
+
+    <div class="container">
+    <div class="text-center mt-4">
+    <img src="{{ url_for('static', filename='teste.gif') }}" alt="GIF"  width="100" height="100" style="display:inline-block; vertical-align:middle; margin-right:10px;">
+    <h1 style="display:inline-block; vertical-align:middle;">Agentes Conectados</h1>
+    </div>
+
+
+
+        <div class="row mt-4 justify-content-right">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa fa-desktop" aria-hidden="true"></i>
+                            Todos os Agentes
+                        </h5>
+                        <div class="dropdown float-right">
+                            <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Comandos
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="#" onclick="sendCommandToAll('GET_INFO')">Informações de todas maquinas</a>
+                                <a class="dropdown-item" href="#" onclick="sendCommandToAll('DELET_MACHINE')">Deletar maquinas</a>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr class="my-4">
+        <!-- Linha de separação -->
+        <!-- Listagem dos Agentes Individuais -->
+        <div class="row justify-content-right">
+            {% for agent, status in agents.items() %}
+            <div class="col-md-4 mt-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa fa-desktop" aria-hidden="true"></i>
+                            {{ agent }}
+                        </h5>
+                        {% if status == "online" %}
+                        <span class="badge badge-success">Online</span>
+                        <div class="dropdown float-right">
+                            <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Comandos
+                            </button>
+
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="#" onclick="sendCommand('{{ agent }}', 'GET_INFO')">Informações da maquina</a>
+                                <a class="dropdown-item" href="#" onclick="sendCommand('{{ agent }}', 'DELET_MACHINE')">Deletar maquina</a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="badge badge-danger">Offline</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Modal para exibir informações da máquina -->
+    <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infoModalLabel">Informações da Máquina</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="infoModalBody">
+                    <!-- Conteúdo do Modal aqui -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <script>
+
+        function sendCommandToAll(command) {
+    const validCommands = ['GET_INFO', 'DELETE_MACHINE'];
+
+    if (!validCommands.includes(command)) {
+        console.error('Command not valid:', command);
+        return;
+    }
+
+    fetch("/send_command_to_all", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `command=${command}`,
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Handle the result object
+        const modalBody = document.getElementById('infoModalBody');
+
+        // Clear any previous content
+        modalBody.innerHTML = "";
+
+        // Loop through the responses and display them
+        for (const [agentName, response] of Object.entries(data.result)) {
+            // Add a title with the agent name
+            const title = document.createElement('h5');
+            title.textContent = `Response from ${agentName}:`;
+            modalBody.appendChild(title);
+
+            // Add a paragraph for the agent's response
+            const paragraph = document.createElement('p');
+            paragraph.textContent = response;
+            modalBody.appendChild(paragraph);
+        }
+
+        // Show the modal
+        $('#infoModal').modal('show');
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+function sendCommand(agentName, command) {
+    const validCommands = ['GET_INFO', 'DELET_MACHINE'];
+
+    if (!validCommands.includes(command)) {
+        console.error('Command not valid:', command);
+        return;
+    }
+
+    fetch("/send_command", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `agent_name=${agentName}&command=${command}`,
+    })
+    .then(response => response.json()) // Parse the response as JSON
+    .then(data => {
+        if (command === 'GET_INFO' || command === 'DELET_MACHINE') {
+            const modalBody = document.getElementById('infoModalBody');
+            modalBody.innerHTML = "";
+
+            const title = document.createElement('h5');
+            title.textContent = `Dados da Máquina (${agentName}):`;
+            modalBody.appendChild(title);
+
+            const paragraph = document.createElement('p');
+            paragraph.textContent = data.result; // Access the result property of the data object
+            modalBody.appendChild(paragraph);
+
+            $('#infoModal').modal('show');
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+    </script>
+
+</body>
+</html>
