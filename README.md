@@ -1,6 +1,6 @@
 # Network Random Fill
 
-Este projeto permite fazer um tipo de zero fill que no lugar de zero esreve byter randomicos, todo o controle é feito por uma UI, os comandos são enviados por websocket
+Este projeto permite fazer um tipo de zero fill que no lugar de zeros escreve bytes randomicos, todo o controle é feito por uma UI, os comandos são enviados por websocket
 possuimos o 'agente' que 'infecta' a maquina alvo e possuimos o 'server' responsavel por enviar os comandos e ver os 'agentes conectados'
 
 
@@ -16,4 +16,4 @@ possuimos o 'agente' que 'infecta' a maquina alvo e possuimos o 'server' respons
 # Notas
 Este projeto não está finalizado de fato, precisa ser feitos devidas melhorias, sinta-se livre de modificar como quiser.
 //TODO: Adicionar os registros de maquinas ao banco
-
+//TODO: Melhorar a UI
